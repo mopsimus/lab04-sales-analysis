@@ -16,8 +16,12 @@ public final class SalesAnalyzer {
     public static List<Sale> filterByPeriod(List<Sale> sales, LocalDate from, LocalDate to) {
         validateSales(sales);
         validatePeriod(from, to);
-        throw new UnsupportedOperationException("TODO: filterByPeriod");
-    }
+
+        return sales.stream()
+                .filter(sale ->
+                        !sale.getDate().isBefore(from)
+                                && !sale.getDate().isAfter(to))
+                .collect(Collectors.toList());    }
 
     /** Все продажи с точным совпадением кода товара. Сохраняйте исходный порядок. */
     public static List<Sale> findByProductCode(List<Sale> sales, String productCode) {
@@ -25,46 +29,78 @@ public final class SalesAnalyzer {
         if (productCode == null || productCode.isBlank()) {
             throw new IllegalArgumentException("Код товара должен быть непустым");
         }
-        throw new UnsupportedOperationException("TODO: findByProductCode");
+        List<Sale> result = new ArrayList<>();
+
+        for (Sale sale : sales) {
+            if (sale.getProductCode().equals(productCode)) {
+                result.add(sale);
+            }
+        }
+
+        return result;
     }
 
     /** Новый список по убыванию суммы продажи; при равенстве суммы — по id по возрастанию. */
     public static List<Sale> sortByAmountDescending(List<Sale> sales) {
         validateSales(sales);
-        throw new UnsupportedOperationException("TODO: sortByAmountDescending");
+        List<Sale> result = new ArrayList<>(sales);
+
+        result.sort(
+                Comparator.comparingDouble(Sale::getAmount)
+                        .reversed()
+                        .thenComparing(Sale::getId)
+        );
+
+        return result;
     }
 
     /** Коды покупателей без повторений. Порядок элементов не задан. */
     public static Set<String> uniqueCustomerCodes(List<Sale> sales) {
         validateSales(sales);
-        throw new UnsupportedOperationException("TODO: uniqueCustomerCodes");
+        Set<String> result = new HashSet<>();
+
+        for (Sale sale : sales) {
+            result.add(sale.getCustomerCode());
+        }
+
+        return result;
     }
 
     /** Категория → список продаж. Внутри группы сохраняйте исходный порядок. Используйте Stream API. */
     public static Map<String, List<Sale>> groupByCategory(List<Sale> sales) {
         validateSales(sales);
-        throw new UnsupportedOperationException("TODO: groupByCategory");
-    }
+        return sales.stream()
+                .collect(Collectors.groupingBy(Sale::getCategory));    }
 
     /** Сумма продаж за период включительно, для пустого результата — 0. Используйте Stream API. */
     public static double totalAmountForPeriod(List<Sale> sales, LocalDate from, LocalDate to) {
         validateSales(sales);
         validatePeriod(from, to);
-        throw new UnsupportedOperationException("TODO: totalAmountForPeriod");
+        return filterByPeriod(sales, from, to).stream()
+                .mapToDouble(Sale::getAmount)
+                .sum();
     }
 
     /** Сумма продаж каждой категории за период. Используйте Stream API. */
     public static Map<String, Double> amountByCategoryForPeriod(List<Sale> sales, LocalDate from, LocalDate to) {
         validateSales(sales);
         validatePeriod(from, to);
-        throw new UnsupportedOperationException("TODO: amountByCategoryForPeriod");
+        return filterByPeriod(sales, from, to).stream()
+                .collect(Collectors.groupingBy(
+                        Sale::getCategory,
+                        Collectors.summingDouble(Sale::getAmount)
+                ));
     }
 
     /** Сумма продаж по датам за период. Используйте Stream API. */
     public static Map<LocalDate, Double> amountByDateForPeriod(List<Sale> sales, LocalDate from, LocalDate to) {
         validateSales(sales);
         validatePeriod(from, to);
-        throw new UnsupportedOperationException("TODO: amountByDateForPeriod");
+        return filterByPeriod(sales, from, to).stream()
+                .collect(Collectors.groupingBy(
+                        Sale::getDate,
+                        Collectors.summingDouble(Sale::getAmount)
+                ));
     }
 
     // Проверки уже готовы. Изменять их не требуется.
